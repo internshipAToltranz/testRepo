@@ -1,0 +1,110 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ejb_session;
+
+import entities.MainLocation;
+import entities.SubLocation;
+import java.util.Iterator;
+import java.util.List;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceUnit;
+
+/**
+ *
+ * @author Owner
+ */
+@Stateless
+public class TransportSessionBean {
+
+    // Add business logic below. (Right-click in editor and choose
+    // "Insert Code > Add Business Method")
+    
+    //Persist data to entities
+    @PersistenceContext 
+    EntityManager em;
+    @PersistenceUnit
+    private EntityManagerFactory emf;
+    
+    //Insert data into database
+    public void createLocation(MainLocation ml){
+    
+    em.persist(ml);
+    }
+    
+    //fetch main Location and their sublocation repectively going to an enetered location ID
+    public MainLocation getLocator(int locId){
+        MainLocation mn=em.find(MainLocation.class, locId);
+        return mn;  
+    }
+    
+    //Get a sublocation name going from its id
+    public List<SubLocation> getSubLoc(int subLocId){
+         em = emf.createEntityManager();
+         List<SubLocation> list = (List<SubLocation>)em.createQuery("SELECT s FROM SubLocation s where s.subLocationId=:subLocId")
+                 .setParameter("subLocId", subLocId).getResultList();
+
+             return list;
+    }
+    
+    //Get a sublocation list from an entered location name
+    public List<MainLocation> getSubLocList(String locName){
+         em = emf.createEntityManager();
+         List<MainLocation> list = (List<MainLocation>)em.createQuery("SELECT m FROM MainLocation m where m.locationName=:locName")
+                 .setParameter("locName", locName).getResultList();
+
+             return list;
+    }
+    
+    //select all main locations
+    public List<MainLocation> selectMainLocation(){
+        em = emf.createEntityManager();
+         List<MainLocation> list = (List<MainLocation>)em.createQuery("SELECT m FROM MainLocation m").getResultList();
+            
+             return list;  
+        }
+    
+    //select all main locations
+    public List<MainLocation> selectMainLocationAndSubLocation(){
+        em = emf.createEntityManager();
+         List<MainLocation> list = (List<MainLocation>)em.createQuery("SELECT m FROM MainLocation m JOIN m.subLocation s WHERE m.locationId= s.locationId").getResultList();
+            
+             return list;  
+        }
+    
+     //select all sub locations
+    public List<SubLocation> subLocationFinder(){
+        
+         em = emf.createEntityManager();
+         List<SubLocation> list = (List<SubLocation>)em.createQuery("SELECT s FROM SubLocation s").getResultList();
+
+             return list;
+        }
+    
+    //select all sub locations from an entered location name
+    public List<SubLocation> subLocationName(int locId){
+        
+         em = emf.createEntityManager();
+         List<SubLocation> list = (List<SubLocation>)em.createQuery("SELECT s FROM SubLocation s where s.locationId=:locId")
+                 .setParameter("locId", locId).getResultList();
+
+             return list;
+        }
+    
+     //select main location going from an entered subLocation
+    public MainLocation placementFinder(String subLocName){
+        List<MainLocation> list=(List<MainLocation>)em.createQuery("SELECT m FROM MainLocation m JOIN m.subLocation s WHERE m.locationId= s.locationId and ((s.sublocationName =:subLocName)or(m.locationName=:subLocName))")
+                .setParameter("subLocName",subLocName).getResultList();
+        Iterator i=list.iterator();
+        MainLocation ml = null;
+        while (i.hasNext()) {
+                ml = (MainLocation) i.next();
+            }
+         return ml;
+        }
+}
