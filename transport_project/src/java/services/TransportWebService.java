@@ -41,9 +41,11 @@ public class TransportWebService {
     @EJB 
     private TransportSessionBean tsb;
     
+    private String msg="Success",msgFail="Failed";
+    
     @POST 
     @Path("insertNewLocation")
-    public void InsertStudent(InputStream is){
+    public void InsertNewLocation(InputStream is){
     
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -207,7 +209,104 @@ public class TransportWebService {
     @Produces(MediaType.APPLICATION_XML)
     public String placementFinder(@PathParam("sublocationname")String subLocName) {
         
-        MainLocation subLocationList = tsb.placementFinder(subLocName);
-        return subLocationList.getLocationName();
+        MainLocation mn = tsb.placementFinder(subLocName);
+        return mn.getLocationName();
     }
+    
+    //Delete Main Location
+    @POST
+    @Path("deletelocation/{locid}")
+    @Produces(MediaType.APPLICATION_XML)
+    public String deleteLocation(@PathParam("locid")int locId){
+    String message=tsb.deleteLocation(locId);
+    
+    return message;
+    }
+    
+    //Update already exist data
+    @POST 
+    @Path("updatelocation")
+    public void updateLocation(InputStream is){
+    
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            StringBuilder sb = new StringBuilder();
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+
+            }
+            String xmldata = sb.toString();
+            XMLInputFactory fc = XMLInputFactory.newFactory();
+            StreamSource xml = new StreamSource(new StringReader(xmldata));
+            XMLStreamReader sr = fc.createXMLStreamReader(xml);
+            JAXBContext context = JAXBContext.newInstance(MainLocation.class);
+            Unmarshaller um = context.createUnmarshaller();
+            JAXBElement<MainLocation> je = um.unmarshal(sr, MainLocation.class);
+            sr.close();
+            MainLocation ml = new MainLocation();
+            ml = je.getValue();            
+            tsb.updateData(ml);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+
+        }
+    }
+    
+    //get mainlocation's sublocation from the main Location's ID
+    @GET
+    @Path("getsublocationbyid/{locid}")
+    public String getSublocById(@PathParam("locid") int locId){
+    List<MainLocation> mnln=tsb.getSubLocListById(locId);
+    Iterator i=mnln.iterator();
+    String loc="List of Location and its sublocations:\n";
+    MainLocation mn=new MainLocation();
+    SubLocation sbln=new SubLocation();
+    while(i.hasNext()){
+    mn=(MainLocation) i.next();
+    loc+=mn.getLocationName()+":\n";
+    
+    //get list of sub location of the entered main location
+    List<SubLocation>subLoc=mn.getSubLocation();
+    Iterator itr=subLoc.iterator();
+    while(itr.hasNext()){
+    sbln=(SubLocation)itr.next();
+    loc+="\t-"+sbln.getSublocationName()+"\n";
+    }
+    }
+    return loc;
+    }
+    
+    //Mapping new sublocations
+    @POST 
+    @Path("mapsubloc")
+    public void mapSubLoc(InputStream is){
+    
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            StringBuilder sb = new StringBuilder();
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+
+            }
+            String xmldata = sb.toString();
+            XMLInputFactory fc = XMLInputFactory.newFactory();
+            StreamSource xml = new StreamSource(new StringReader(xmldata));
+            XMLStreamReader sr = fc.createXMLStreamReader(xml);
+            JAXBContext context = JAXBContext.newInstance(SubLocation.class);
+            Unmarshaller um = context.createUnmarshaller();
+            JAXBElement<SubLocation> je = um.unmarshal(sr, SubLocation.class);
+            sr.close();
+            SubLocation sbl = new SubLocation();
+            sbl = je.getValue();            
+            tsb.mappingSubLocation(sbl);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+
+        }
+    }
+    
 }
